@@ -262,6 +262,7 @@ view model =
                         , attribute "aria-haspopup" <| String.toLower <| toString model.showMenu
                         , attribute "role" "combobox"
                         , attribute "aria-autocomplete" "list"
+                        , attribute "autofocus" "true"
                         ]
                     )
                     []
