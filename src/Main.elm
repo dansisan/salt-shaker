@@ -151,7 +151,7 @@ update msg model =
                     setQuery model id
                         |> resetMenu
             in
-                ( newModel, Task.attempt (\_ -> NoOp) (Dom.focus "food-input") )
+                ( {newModel | selectedFood = model.activeMenuFood}, Task.attempt (\_ -> NoOp) (Dom.focus "food-input") )
 
         PreviewFood id ->
             { model | activeMenuFood = Just <| getFoodAtId model.foods id } ! []
