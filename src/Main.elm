@@ -30,8 +30,9 @@ type alias Model =
     , autoState : Autocomplete.State
     , howManyToShow : Int
     , query : String
-    , selectedFood : Maybe Food
+    , activeMenuFood : Maybe Food -- currently active in menu and will be selected on enter/mouse
     , showMenu : Bool
+    , selectedFood : Maybe Food -- selected by hitting enter or mouse
     }
 
 
@@ -41,8 +42,9 @@ init =
     , autoState = Autocomplete.empty
     , howManyToShow = 5
     , query = ""
-    , selectedFood = Nothing
+    , activeMenuFood = Nothing
     , showMenu = False
+    , selectedFood = Nothing
     }
 
 
@@ -67,7 +69,7 @@ update msg model =
                 showMenu =
                     not << List.isEmpty <| (acceptableFood newQuery model.foods)
             in
-                { model | query = newQuery, showMenu = showMenu, selectedFood = Nothing } ! []
+                { model | query = newQuery, showMenu = showMenu, activeMenuFood = Nothing } ! []
 
         SetAutoState autoMsg ->
             let
@@ -100,7 +102,7 @@ update msg model =
                             |> resetMenu
 
                 escapedModel =
-                    case model.selectedFood of
+                    case model.activeMenuFood of
                         Just food ->
                             if model.query == food.name then
                                 model
@@ -114,7 +116,7 @@ update msg model =
                 escapedModel ! []
 
         Wrap toTop ->
-            case model.selectedFood of
+            case model.activeMenuFood of
                 Just food ->
                     update Reset model
 
@@ -122,18 +124,18 @@ update msg model =
                     if toTop then
                         { model
                             | autoState = Autocomplete.resetToLastItem updateConfig (acceptableFood model.query model.foods) model.howManyToShow model.autoState
-                            , selectedFood = List.head <| List.reverse <| List.take model.howManyToShow <| (acceptableFood model.query model.foods)
+                            , activeMenuFood = List.head <| List.reverse <| List.take model.howManyToShow <| (acceptableFood model.query model.foods)
                         }
                             ! []
                     else
                         { model
                             | autoState = Autocomplete.resetToFirstItem updateConfig (acceptableFood model.query model.foods) model.howManyToShow model.autoState
-                            , selectedFood = List.head <| List.take model.howManyToShow <| (acceptableFood model.query model.foods)
+                            , activeMenuFood = List.head <| List.take model.howManyToShow <| (acceptableFood model.query model.foods)
                         }
                             ! []
 
         Reset ->
-            { model | autoState = Autocomplete.reset updateConfig model.autoState, selectedFood = Nothing } ! []
+            { model | autoState = Autocomplete.reset updateConfig model.autoState, activeMenuFood = Nothing } ! []
 
         SelectFoodKeyboard id ->
             let
@@ -141,7 +143,7 @@ update msg model =
                     setQuery model id
                         |> resetMenu
             in
-                newModel ! []
+                {newModel | selectedFood = model.activeMenuFood} ! []
 
         SelectFoodMouse id ->
             let
@@ -152,7 +154,7 @@ update msg model =
                 ( newModel, Task.attempt (\_ -> NoOp) (Dom.focus "food-input") )
 
         PreviewFood id ->
-            { model | selectedFood = Just <| getFoodAtId model.foods id } ! []
+            { model | activeMenuFood = Just <| getFoodAtId model.foods id } ! []
 
         OnFocus ->
             model ! []
@@ -168,7 +170,7 @@ resetInput model =
 
 
 removeSelection model =
-    { model | selectedFood = Nothing }
+    { model | activeMenuFood = Nothing }
 
 
 getFoodAtId foods id =
@@ -180,7 +182,7 @@ getFoodAtId foods id =
 setQuery model id =
     { model
         | query = .name <| getFoodAtId model.foods id
-        , selectedFood = Just <| getFoodAtId model.foods id
+        , activeMenuFood = Just <| getFoodAtId model.foods id
     }
 
 
@@ -228,7 +230,7 @@ view model =
                 []
 
         query =
-            case model.selectedFood of
+            case model.activeMenuFood of
                 Just food ->
                     food.name
 
@@ -236,7 +238,7 @@ view model =
                     model.query
 
         activeDescendant attributes =
-            case model.selectedFood of
+            case model.activeMenuFood of
                 Just food ->
                     (attribute "aria-activedescendant"
                         food.name
@@ -248,27 +250,43 @@ view model =
     in
         div [ class "parent" ]
             (List.append
-                [ input
-                    (activeDescendant
-                        [ onInput SetQuery
-                        , onFocus OnFocus
-                        , onWithOptions "keydown" options dec
-                        , value query
-                        , id "food-input"
-                        , class "autocomplete-input"
-                        , autocomplete False
-                        , attribute "aria-owns" "list-of-foods"
-                        , attribute "aria-expanded" <| String.toLower <| toString model.showMenu
-                        , attribute "aria-haspopup" <| String.toLower <| toString model.showMenu
-                        , attribute "role" "combobox"
-                        , attribute "aria-autocomplete" "list"
-                        , attribute "autofocus" "true"
-                        ]
-                    )
-                    []
-                ]
-                menu
+                (List.append
+                    [ input
+                        (activeDescendant
+                            [ onInput SetQuery
+                            , onFocus OnFocus
+                            , onWithOptions "keydown" options dec
+                            , value query
+                            , id "food-input"
+                            , class "autocomplete-input"
+                            , autocomplete False
+                            , attribute "aria-owns" "list-of-foods"
+                            , attribute "aria-expanded" <| String.toLower <| toString model.showMenu
+                            , attribute "aria-haspopup" <| String.toLower <| toString model.showMenu
+                            , attribute "role" "combobox"
+                            , attribute "aria-autocomplete" "list"
+                            , attribute "autofocus" "true"
+                            ]
+                        )
+                        []
+                    ]
+                    menu
+                )
+                [ div [style
+                           [ ("position", "absolute")
+                           , ("top", "300px")
+                           ]
+                       ] [ text (getFoodDisplay model) ] ]
             )
+
+
+getFoodDisplay : Model -> String
+getFoodDisplay model =
+    case model.selectedFood of
+        Nothing ->
+            ""
+        Just food ->
+            food.name ++ " has " ++ toString food.salt ++ " mg of salt "
 
 
 acceptableFood : String -> List Food -> List Food
