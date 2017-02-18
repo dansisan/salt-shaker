@@ -8,13 +8,12 @@ import FoodSelector
 -- MODEL
 
 type alias Model =
-  { autocompleteModel : FoodSelector.Model
+  { foodSelectorModel : FoodSelector.Model
   }
 
 
 initialModel : Model
-initialModel = { autocompleteModel = FoodSelector.init
-               , selectedFood = Nothing
+initialModel = { foodSelectorModel = FoodSelector.init
                }
 
 init : ( Model, Cmd Msg )
@@ -32,7 +31,7 @@ view: Model -> Html Msg
 view model =
 
   Html.div []
-      [ Html.map AutocompleteMsg (FoodSelector.view model.autocompleteModel)
+      [ Html.map AutocompleteMsg (FoodSelector.view model.foodSelectorModel)
       ]
 
 -- UPDATE
@@ -42,10 +41,10 @@ update msg model =
   case msg of
     AutocompleteMsg subMsg ->
       let
-        ( autocompleteModel, autocompleteCmd ) =
-            FoodSelector.update subMsg model.autocompleteModel
+        ( foodSelectorModel, autocompleteCmd ) =
+            FoodSelector.update subMsg model.foodSelectorModel
       in
-        ({ model | autocompleteModel = autocompleteModel }, Cmd.map AutocompleteMsg autocompleteCmd )
+        ({ model | foodSelectorModel = foodSelectorModel }, Cmd.map AutocompleteMsg autocompleteCmd )
 
 
 -- SUBSCRIPTIONS
@@ -54,7 +53,7 @@ subscriptions: Model -> Sub Msg
 subscriptions model =
     Sub.batch
             -- process module subscriptions
-            [ Sub.map AutocompleteMsg (FoodSelector.subscriptions model.autocompleteModel)
+            [ Sub.map AutocompleteMsg (FoodSelector.subscriptions model.foodSelectorModel)
             ]
 -- MAIN
 main: Program Never Model Msg
