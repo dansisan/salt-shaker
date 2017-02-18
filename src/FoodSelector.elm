@@ -1,4 +1,4 @@
-module AutocompleteModule exposing (..)
+module FoodSelector exposing (..)
 
 import Autocomplete
 import Html exposing (..)

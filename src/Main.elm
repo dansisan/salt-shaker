@@ -3,16 +3,19 @@ module Main exposing (..)
 import Html exposing (..)
 import Autocomplete
 import Html.Attributes exposing (..)
-import AutocompleteModule
+import FoodSelector
 
 -- MODEL
 
 type alias Model =
-  { autocompleteModel : AutocompleteModule.Model }
+  { autocompleteModel : FoodSelector.Model
+  }
 
 
 initialModel : Model
-initialModel = { autocompleteModel = AutocompleteModule.init }
+initialModel = { autocompleteModel = FoodSelector.init
+               , selectedFood = Nothing
+               }
 
 init : ( Model, Cmd Msg )
 init =
@@ -21,7 +24,7 @@ init =
 -- MESSAGES
 
 type Msg
-  = AutocompleteMsg AutocompleteModule.Msg
+  = AutocompleteMsg FoodSelector.Msg
 
 -- VIEW
 
@@ -29,7 +32,7 @@ view: Model -> Html Msg
 view model =
 
   Html.div []
-      [ Html.map AutocompleteMsg (AutocompleteModule.view model.autocompleteModel)
+      [ Html.map AutocompleteMsg (FoodSelector.view model.autocompleteModel)
       ]
 
 -- UPDATE
@@ -40,7 +43,7 @@ update msg model =
     AutocompleteMsg subMsg ->
       let
         ( autocompleteModel, autocompleteCmd ) =
-            AutocompleteModule.update subMsg model.autocompleteModel
+            FoodSelector.update subMsg model.autocompleteModel
       in
         ({ model | autocompleteModel = autocompleteModel }, Cmd.map AutocompleteMsg autocompleteCmd )
 
@@ -51,7 +54,7 @@ subscriptions: Model -> Sub Msg
 subscriptions model =
     Sub.batch
             -- process module subscriptions
-            [ Sub.map AutocompleteMsg (AutocompleteModule.subscriptions model.autocompleteModel)
+            [ Sub.map AutocompleteMsg (FoodSelector.subscriptions model.autocompleteModel)
             ]
 -- MAIN
 main: Program Never Model Msg
