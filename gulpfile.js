@@ -43,7 +43,7 @@ gulp.task('static', function() {
 
 // Watch for changes and compile
 gulp.task('watch', function() {
-    gulp.watch(paths.elm, ['elm']);
+    // gulp.watch(paths.elm, ['elm']);
     gulp.watch(paths.less, ['less']);
     gulp.watch(paths.static, ['static']);
 });
