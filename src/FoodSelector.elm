@@ -250,43 +250,27 @@ view model =
     in
         div [ class "parent" ]
             (List.append
-                (List.append
-                    [ input
-                        (activeDescendant
-                            [ onInput SetQuery
-                            , onFocus OnFocus
-                            , onWithOptions "keydown" options dec
-                            , value query
-                            , id "food-input"
-                            , class "autocomplete-input"
-                            , autocomplete False
-                            , attribute "aria-owns" "list-of-foods"
-                            , attribute "aria-expanded" <| String.toLower <| toString model.showMenu
-                            , attribute "aria-haspopup" <| String.toLower <| toString model.showMenu
-                            , attribute "role" "combobox"
-                            , attribute "aria-autocomplete" "list"
-                            , attribute "autofocus" "true"
-                            ]
-                        )
-                        []
-                    ]
-                    menu
-                )
-                [ div [style
-                           [ ("position", "absolute")
-                           , ("top", "300px")
-                           ]
-                       ] [ text (getFoodDisplay model) ] ]
+                [ input
+                    (activeDescendant
+                        [ onInput SetQuery
+                        , onFocus OnFocus
+                        , onWithOptions "keydown" options dec
+                        , value query
+                        , id "food-input"
+                        , class "autocomplete-input"
+                        , autocomplete False
+                        , attribute "aria-owns" "list-of-foods"
+                        , attribute "aria-expanded" <| String.toLower <| toString model.showMenu
+                        , attribute "aria-haspopup" <| String.toLower <| toString model.showMenu
+                        , attribute "role" "combobox"
+                        , attribute "aria-autocomplete" "list"
+                        , attribute "autofocus" "true"
+                        ]
+                    )
+                    []
+                ]
+                menu
             )
-
-
-getFoodDisplay : Model -> String
-getFoodDisplay model =
-    case model.selectedFood of
-        Nothing ->
-            ""
-        Just food ->
-            food.name ++ " has " ++ toString food.salt ++ " mg of salt "
 
 
 acceptableFood : String -> List Food -> List Food

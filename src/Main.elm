@@ -32,8 +32,17 @@ view model =
 
   Html.div []
       [ Html.map AutocompleteMsg (FoodSelector.view model.foodSelectorModel)
+      , div [style [ ("position", "relative"), ("text-align", "center"), ("top", "250px"), ("font-size", "24px") ]]
+            [ text ( getFoodDisplay model ) ]
       ]
 
+getFoodDisplay : Model -> String
+getFoodDisplay model =
+    case model.foodSelectorModel.selectedFood of
+        Nothing ->
+            ""
+        Just food ->
+            food.name ++ " has " ++ toString food.salt ++ " mg of salt "
 -- UPDATE
 
 update: Msg -> Model -> ( Model, Cmd Msg )
