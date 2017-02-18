@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Html exposing (..)
+import Autocomplete
 import Html.Attributes exposing (..)
 import AutocompleteModule
 
@@ -48,8 +49,10 @@ update msg model =
 
 subscriptions: Model -> Sub Msg
 subscriptions model =
-  Sub.none
-
+    Sub.batch
+            -- process module subscriptions
+            [ Sub.map AutocompleteMsg (AutocompleteModule.subscriptions model.autocompleteModel)
+            ]
 -- MAIN
 main: Program Never Model Msg
 main =
