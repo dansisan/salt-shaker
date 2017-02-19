@@ -32,6 +32,7 @@ view model =
 
   Html.div []
       [ Html.map AutocompleteMsg (FoodSelector.view model.foodSelectorModel)
+      , img [ style [ ("position", "absolute" ), ("transform", "rotate(180deg)") ], src "../salt-shaker.jpg" ] []
       , div [style [ ("position", "relative"), ("text-align", "center"), ("top", "250px"), ("font-size", "24px") ]]
             [ getFoodDisplay model ]
       ]
