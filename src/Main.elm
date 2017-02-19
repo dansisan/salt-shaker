@@ -18,7 +18,7 @@ type alias Model =
 initialModel : Model
 initialModel = { foodSelectorModel = FoodSelector.init
                , animationStyle = Animation.style
-                                    [ Animation.left (px 0.0)
+                                    [ Animation.translate (px 0.0) (px 0.0)
                                     , Animation.opacity 1.0
                                     ]
                }
@@ -32,7 +32,7 @@ init =
 type Msg
   = AutocompleteMsg FoodSelector.Msg
     | Animate Animation.Msg
-    | FadeInFadeOut
+    | ShakeIt
 
 -- VIEW
 
@@ -46,7 +46,7 @@ view model =
             [ getFoodDisplay model ]
       , div
             (Animation.render model.animationStyle
-                ++ [ onClick FadeInFadeOut
+                ++ [ onClick ShakeIt
                    , style
                         [ ( "position", "absolute" )
                         , ( "margin", "100px auto" )
@@ -92,15 +92,13 @@ update msg model =
                 , Cmd.none
                 )
 
-    FadeInFadeOut ->
+    ShakeIt ->
                 ( { model | animationStyle =
                         Animation.interrupt
                             [ Animation.to
-                                [ Animation.opacity 0
-                                ]
+                                [ Animation.translate (px 0) (px 100) ]
                             , Animation.to
-                                [ Animation.opacity 1
-                                ]
+                                [ Animation.translate (px 0) (px 0) ]
                             ]
                             model.animationStyle
                   }
