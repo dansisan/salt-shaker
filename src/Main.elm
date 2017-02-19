@@ -3,17 +3,24 @@ module Main exposing (..)
 import Html exposing (..)
 import Autocomplete
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
+import Animation exposing (px)
 import FoodSelector
 
 -- MODEL
 
 type alias Model =
   { foodSelectorModel : FoodSelector.Model
+  , animationStyle : Animation.State
   }
 
 
 initialModel : Model
 initialModel = { foodSelectorModel = FoodSelector.init
+               , animationStyle = Animation.style
+                                    [ Animation.left (px 0.0)
+                                    , Animation.opacity 1.0
+                                    ]
                }
 
 init : ( Model, Cmd Msg )
@@ -24,6 +31,8 @@ init =
 
 type Msg
   = AutocompleteMsg FoodSelector.Msg
+    | Animate Animation.Msg
+    | FadeInFadeOut
 
 -- VIEW
 
@@ -35,6 +44,22 @@ view model =
       , img [ style [ ("position", "absolute" ), ("transform", "rotate(180deg)") ], src "../salt-shaker.jpg" ] []
       , div [style [ ("position", "relative"), ("text-align", "center"), ("top", "250px"), ("font-size", "24px") ]]
             [ getFoodDisplay model ]
+      , div
+            (Animation.render model.animationStyle
+                ++ [ onClick FadeInFadeOut
+                   , style
+                        [ ( "position", "absolute" )
+                        , ( "margin", "100px auto" )
+                        , ( "padding", "25px" )
+                        , ( "width", "200px" )
+                        , ( "height", "200px" )
+                        , ( "background-color", "#268bd2" )
+                        , ( "color", "white" )
+                        , ( "top", "305px" )
+                        ]
+                   ]
+            )
+            [ text "Click to Animate!" ]
       ]
 
 getFoodDisplay : Model -> Html msg
@@ -60,6 +85,28 @@ update msg model =
       in
         ({ model | foodSelectorModel = foodSelectorModel }, Cmd.map AutocompleteMsg autocompleteCmd )
 
+    Animate animMsg ->
+                ( { model
+                    | animationStyle = Animation.update animMsg model.animationStyle
+                  }
+                , Cmd.none
+                )
+
+    FadeInFadeOut ->
+                ( { model | animationStyle =
+                        Animation.interrupt
+                            [ Animation.to
+                                [ Animation.opacity 0
+                                ]
+                            , Animation.to
+                                [ Animation.opacity 1
+                                ]
+                            ]
+                            model.animationStyle
+                  }
+                , Cmd.none
+                )
+
 
 -- SUBSCRIPTIONS
 
@@ -68,6 +115,7 @@ subscriptions model =
     Sub.batch
             -- process module subscriptions
             [ Sub.map AutocompleteMsg (FoodSelector.subscriptions model.foodSelectorModel)
+            , Animation.subscription Animate [ model.animationStyle ]
             ]
 -- MAIN
 main: Program Never Model Msg
