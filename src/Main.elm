@@ -40,25 +40,18 @@ view model =
 
   Html.div []
       [ Html.map AutocompleteMsg (FoodSelector.view model.foodSelectorModel)
-      , img [ style [ ("position", "absolute" ), ("transform", "rotate(180deg)") ], src "../salt-shaker.jpg" ] []
-      , div [style [ ("position", "relative"), ("text-align", "center"), ("top", "250px"), ("font-size", "24px") ]]
-            [ getFoodDisplay model ]
-      , div
+      , img
             (Animation.render model.animationStyle
                 ++ [ onClick ShakeIt
                    , style
                         [ ( "position", "absolute" )
-                        , ( "margin", "100px auto" )
-                        , ( "padding", "25px" )
-                        , ( "width", "200px" )
-                        , ( "height", "200px" )
-                        , ( "background-color", "#268bd2" )
-                        , ( "color", "white" )
-                        , ( "top", "305px" )
                         ]
+                    , src "../salt-shaker.jpg"
                    ]
-            )
-            [ text "Click to Animate!" ]
+            ) []
+
+      , div [style [ ("position", "relative"), ("text-align", "center"), ("top", "250px"), ("font-size", "24px") ]]
+            [ getFoodDisplay model ]
       ]
 
 getFoodDisplay : Model -> Html msg
