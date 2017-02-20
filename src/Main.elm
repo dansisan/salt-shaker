@@ -5,6 +5,7 @@ import Autocomplete
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Animation exposing (px)
+import Ease exposing (..)
 import FoodSelector
 
 -- MODEL
@@ -17,10 +18,8 @@ type alias Model =
 
 initialModel : Model
 initialModel = { foodSelectorModel = FoodSelector.init
-               , animationStyle = Animation.style
-                                    [ Animation.translate (px 0.0) (px 0.0)
-                                    , Animation.opacity 1.0
-                                    ]
+               , animationStyle = Animation.styleWith (Animation.easing { duration = 224.0, ease = bezier 0.94 0.01 0.94 0.44 })
+                                    [ Animation.translate (px 0.0) (px 0.0) ]
                }
 
 init : ( Model, Cmd Msg )
@@ -96,7 +95,7 @@ update msg model =
                 ( { model | animationStyle =
                         Animation.interrupt
                             [ Animation.to
-                                [ Animation.translate (px 0) (px 100) ]
+                                [ Animation.translate (px 0) (px 150) ]
                             , Animation.to
                                 [ Animation.translate (px 0) (px 0) ]
                             ]
