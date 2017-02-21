@@ -43,7 +43,7 @@ view model =
       [ Html.map AutocompleteMsg (FoodSelector.view model.foodSelectorModel)
       , img
             (Animation.render model.animationStyle
-                ++ [ onClick (ShakeIt 8)
+                ++ [ onClick (ShakeIt (getNumShakes model))
                    , style
                         [ ( "position", "absolute" )
                         ]
@@ -55,6 +55,17 @@ view model =
             [ getFoodDisplay model ]
       ]
 
+getNumShakes : Model -> Int
+getNumShakes model =
+    case model.foodSelectorModel.selectedFood of
+        Nothing ->
+            0
+        Just food ->
+            shakesFromMg food.salt
+
+shakesFromMg : Int -> Int
+shakesFromMg mg = mg // 50
+
 getFoodDisplay : Model -> Html msg
 getFoodDisplay model =
     case model.foodSelectorModel.selectedFood of
@@ -64,7 +75,9 @@ getFoodDisplay model =
             div []
                 [ text ( food.name ++ " has " )
                 , span [style [("font-weight", "bold")] ] [ text ( toString food.salt ++ "mg" )  ]
-                , text ( " of salt " ) ]
+                , text ( " of salt. " )
+                , text ( "That's " ++ toString ( shakesFromMg food.salt ) ++ " salt shakes" )
+                ]
 
 -- UPDATE
 
