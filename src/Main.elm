@@ -63,8 +63,13 @@ getNumShakes model =
         Just food ->
             shakesFromMg food.salt
 
+-- From salt package, .54 g sodium / 1.4 g salt = .386
+-- Exp 1, 3 holes open, 74 shakes / 4 g = 48
+-- Exp 2, 1 hole open, 80 shakes / 3 g = 69
+-- Avg 58.5
+
 shakesFromMg : Int -> Int
-shakesFromMg mg = mg // 50
+shakesFromMg mg = mg *  59 // 1000
 
 getFoodDisplay : Model -> Html msg
 getFoodDisplay model =
