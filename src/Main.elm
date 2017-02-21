@@ -32,7 +32,7 @@ init =
 type Msg
   = AutocompleteMsg FoodSelector.Msg
     | Animate Animation.Msg
-    | ShakeIt
+    | ShakeIt Int
 
 -- VIEW
 
@@ -43,7 +43,7 @@ view model =
       [ Html.map AutocompleteMsg (FoodSelector.view model.foodSelectorModel)
       , img
             (Animation.render model.animationStyle
-                ++ [ onClick ShakeIt
+                ++ [ onClick (ShakeIt 8)
                    , style
                         [ ( "position", "absolute" )
                         ]
@@ -85,12 +85,12 @@ update msg model =
                 , Cmd.none
                 )
 
-    ShakeIt ->
+    ShakeIt nTimes ->
                 ( { model | animationStyle =
                     Animation.interrupt
                         [ Animation.to
                             [ Animation.rotate (turn 0.5) ]
-                        , ( Animation.repeat 5
+                        , ( Animation.repeat nTimes
                             [ Animation.to
                                 [ Animation.translate (px 0) (px 150) ]
                             , Animation.to
