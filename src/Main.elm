@@ -87,15 +87,17 @@ update msg model =
 
     ShakeIt ->
                 ( { model | animationStyle =
-                        Animation.interrupt
+                    Animation.interrupt
+                        [ Animation.to
+                            [ Animation.rotate (turn 0.5) ]
+                        , ( Animation.repeat 5
                             [ Animation.to
-                                [ Animation.rotate (turn 0.5) ]
-                            , Animation.to
                                 [ Animation.translate (px 0) (px 150) ]
                             , Animation.to
                                 [ Animation.translate (px 0) (px 0) ]
-                            ]
-                            model.animationStyle
+                            ] )
+                        ]
+                    model.animationStyle
                   }
                 , Cmd.none
                 )
