@@ -5,7 +5,8 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import String
-import Json.Decode as Json
+import Json.Decode exposing (int, string, float, Decoder)
+import Json.Decode.Pipeline exposing (decode, required, optional)
 import Json.Encode as JE
 import Dom
 import Task
@@ -200,7 +201,7 @@ view model =
             { preventDefault = True, stopPropagation = False }
 
         dec =
-            (Json.map
+            (Json.Decode.map
                 (\code ->
                     if code == 38 || code == 40 then
                         Ok NoOp
@@ -211,17 +212,17 @@ view model =
                 )
                 keyCode
             )
-                |> Json.andThen
+                |> Json.Decode.andThen
                     fromResult
 
-        fromResult : Result String a -> Json.Decoder a
+        fromResult : Result String a -> Json.Decode.Decoder a
         fromResult result =
             case result of
                 Ok val ->
-                    Json.succeed val
+                    Json.Decode.succeed val
 
                 Err reason ->
-                    Json.fail reason
+                    Json.Decode.fail reason
 
         menu =
             if model.showMenu then
@@ -336,13 +337,38 @@ type alias Food =
     }
 
 foods : List Food
-foods =
-    [ Food "Beans, baked, can" 1114
-    , Food "McBiscuit with Egg and Sausage" 1141
-    , Food "Cheese Burger" 891
-    , Food "Coleslaw" 267
-    , Food "Hotdog" 670
-    , Food "Potato chips" 213
-    , Food "Chicken noodle soup" 1106
-    , Food "Small McDonald's french fries" 160
-    ]
+--foods =
+--    [ Food "Beans, baked, can" 1114
+--    , Food "McBiscuit with Egg and Sausage" 1141
+--    , Food "Cheese Burger" 891
+--    , Food "Coleslaw" 267
+--    , Food "Hotdog" 670
+--    , Food "Potato chips" 213
+--    , Food "Chicken noodle soup" 1106
+--    , Food "Small McDonald's french fries" 160
+--    ]
+
+foods = [ getResult """{"name": "Beans, baked, can", "salt": 1114}"""
+        , getResult """{"name": "McBiscuit with Egg and Sausage", "salt": 1141}"""
+        , getResult """{"name": "Cheese Burger", "salt": 891}"""
+        ]
+
+-- Dummy record with the err in place of the name
+nullFood : String -> Food
+nullFood err = { name = err, salt = 0 }
+
+getResult : String -> Food
+getResult inputJson =
+      let result = Json.Decode.decodeString
+            foodDecoder
+            inputJson
+      in
+        case result of
+            Ok val -> val
+            Err err -> nullFood err
+
+foodDecoder : Decoder Food
+foodDecoder =
+  decode Food
+    |> Json.Decode.Pipeline.required "name" string
+    |> Json.Decode.Pipeline.required "salt" int
