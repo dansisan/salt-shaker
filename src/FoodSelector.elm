@@ -336,6 +336,8 @@ type alias Food =
     , salt : Int
     }
 
+-- https://spreadsheets.google.com/feeds/list/1pis8-nvG4uhutYepv__-MSDUQIqch_45fgc1h6fSIfs/od6/public/values?alt=json
+
 foods : List Food
 --foods =
 --    [ Food "Beans, baked, can" 1114
