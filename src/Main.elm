@@ -114,6 +114,8 @@ update msg model =
                             , Animation.to
                                 [ Animation.translate (px 0) (px 0) ]
                             ] )
+                        , Animation.to
+                            [ Animation.rotate (turn 0.0) ]
                         ]
                     model.animationStyle
                   }
