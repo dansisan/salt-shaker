@@ -350,24 +350,28 @@ foods : List Food
 --    , Food "Small McDonald's french fries" 160
 --    ]
 
-foods = [ getResult """{"name": "Beans, baked, can", "salt": 1114}"""
-        , getResult """{"name": "McBiscuit with Egg and Sausage", "salt": 1141}"""
-        , getResult """{"name": "Cheese Burger", "salt": 891}"""
-        ]
+
+foods = getResult
+ """
+[ {"name": "Beans, baked, can", "salt": 1114},
+  {"name": "McBiscuit with Egg and Sausage", "salt": 1141},
+  {"name": "Cheeseburger", "salt": 891}
+]
+"""
 
 -- Dummy record with the err in place of the name
 nullFood : String -> Food
 nullFood err = { name = err, salt = 0 }
 
-getResult : String -> Food
+getResult : String -> List Food
 getResult inputJson =
       let result = Json.Decode.decodeString
-            foodDecoder
+            (Json.Decode.list foodDecoder)
             inputJson
       in
         case result of
             Ok val -> val
-            Err err -> nullFood err
+            Err err -> [ nullFood err ]
 
 foodDecoder : Decoder Food
 foodDecoder =
