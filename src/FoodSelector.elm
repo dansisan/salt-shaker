@@ -1,6 +1,7 @@
 module FoodSelector exposing (..)
 
 import Autocomplete
+import Csv
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -274,6 +275,14 @@ view model =
             )
 
 
+getFood : List String -> Food
+getFood list =
+  case list of
+    [] -> nullFood ""
+    _ :: [] -> nullFood ""
+    [ name, salt ] -> Food name ( Result.withDefault 0 (String.toInt salt) )
+    _ :: _ :: _ :: _ -> nullFood ""
+
 acceptableFood : String -> List Food -> List Food
 acceptableFood query foods =
     let
@@ -354,14 +363,7 @@ foods : List Food
 --    , Food "Small McDonald's french fries" 160
 --    ]
 
-
-foods = getResult
- """
-[ {"name": "Beans, baked, can", "salt": 1114},
-  {"name": "McBiscuit with Egg and Sausage", "salt": 1141},
-  {"name": "Cheeseburger", "salt": 891}
-]
-"""
+foods = List.map getFood ( Csv.split """Beans baked can,1114\nMcBiscuit with Egg and Sausage,1141\nCheeseburger,891""" )
 
 -- Dummy record with the err in place of the name
 nullFood : String -> Food
