@@ -336,7 +336,11 @@ type alias Food =
     , salt : Int
     }
 
+-- JSON feed
 -- https://spreadsheets.google.com/feeds/list/1pis8-nvG4uhutYepv__-MSDUQIqch_45fgc1h6fSIfs/od6/public/values?alt=json
+
+-- CSV feed
+-- "https://docs.google.com/spreadsheets/d/1pis8-nvG4uhutYepv__-MSDUQIqch_45fgc1h6fSIfs/export?exportFormat=csv&amp;gid=0"
 
 foods : List Food
 --foods =
