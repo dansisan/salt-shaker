@@ -397,6 +397,7 @@ foodDecoder =
     |> Json.Decode.Pipeline.required "name" string
     |> Json.Decode.Pipeline.required "salt" int
 
+-- UPDATE: Not needed now that lovasoa fixed bug in Csv.split
 -- Simpler API for recursive method below
 getParsedCsvLine : String -> List String
 getParsedCsvLine input =
