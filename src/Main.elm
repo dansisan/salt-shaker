@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Html exposing (..)
+import Http
 import Autocomplete
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -25,7 +26,7 @@ initialModel = { foodSelectorModel = FoodSelector.init
 
 init : ( Model, Cmd Msg )
 init =
-    ( initialModel, Cmd.none )
+    ( initialModel, Cmd.map LoadFoods FoodSelector.getCsv )
 
 -- MESSAGES
 
@@ -33,6 +34,7 @@ type Msg
   = AutocompleteMsg FoodSelector.Msg
     | Animate Animation.Msg
     | ShakeIt Int
+    | LoadFoods FoodSelector.Msg
 
 -- VIEW
 
@@ -121,6 +123,14 @@ update msg model =
                   }
                 , Cmd.none
                 )
+
+
+    LoadFoods subMsg ->
+        let
+         ( foodSelectorModel, loadFoodsCmd ) =
+            FoodSelector.update subMsg model.foodSelectorModel
+        in
+        ({ model | foodSelectorModel = foodSelectorModel }, Cmd.none )
 
 
 -- SUBSCRIPTIONS

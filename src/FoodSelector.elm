@@ -4,6 +4,7 @@ import Autocomplete
 import Csv
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Http
 import Html.Events exposing (..)
 import String
 import Json.Decode exposing (int, string, float, Decoder)
@@ -40,7 +41,7 @@ type alias Model =
 
 init : Model
 init =
-    { foods = foods
+    { foods = [ Food "" 0 ] -- later populated from csv
     , autoState = Autocomplete.empty
     , howManyToShow = 5
     , query = ""
@@ -60,6 +61,7 @@ type Msg
     | SelectFoodMouse String
     | PreviewFood String
     | OnFocus
+    | LoadFoods (Result Http.Error String)
     | NoOp
 
 
@@ -160,6 +162,12 @@ update msg model =
 
         OnFocus ->
             model ! []
+
+        LoadFoods (Ok foodString) ->
+            { model | foods = List.map getFood ( Csv.split foodString ) } ! []
+
+        LoadFoods (Err _) ->
+             { model | foods = [ Food "" 0 ] } ! []
 
         NoOp ->
             model ! []
@@ -364,6 +372,10 @@ foods : List Food
 --    ]
 
 foods = List.map getFood ( Csv.split """Beans baked can,1114\nMcBiscuit with Egg and Sausage,1141\nCheeseburger,891""" )
+
+getCsv : Cmd Msg
+getCsv =
+    Http.send LoadFoods ( Http.getString "https://gist.githubusercontent.com/dansisan/d657c2e7a36b3b390449821ecc33825b/raw/food-salt.csv" )
 
 -- Dummy record with the err in place of the name
 nullFood : String -> Food
