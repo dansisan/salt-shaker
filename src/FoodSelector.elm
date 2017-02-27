@@ -396,3 +396,18 @@ foodDecoder =
   decode Food
     |> Json.Decode.Pipeline.required "name" string
     |> Json.Decode.Pipeline.required "salt" int
+
+-- Simpler API for recursive method below
+getParsedCsvLine : String -> List String
+getParsedCsvLine input =
+    parseCsvLine input False "" []
+
+-- Splits by comma, respects quote escaping, and removes double quotes
+parseCsvLine : String -> Bool -> String -> List String -> List String
+parseCsvLine input isQuoteOpen currentEntry pastResults =
+    case ((String.uncons input), isQuoteOpen) of
+    (Nothing, _) -> pastResults ++ [currentEntry]
+    (Just ('\"', tl), _)  -> parseCsvLine tl (not isQuoteOpen) currentEntry pastResults
+    (Just (',', tl), True) -> parseCsvLine tl True (currentEntry ++ ",") pastResults
+    (Just (',', tl), False) -> parseCsvLine tl False "" (pastResults ++ [currentEntry])
+    (Just (c, tl), _) -> parseCsvLine tl (isQuoteOpen) (currentEntry ++ String.fromChar c) pastResults
