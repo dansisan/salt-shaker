@@ -41,7 +41,7 @@ type alias Model =
 
 init : Model
 init =
-    { foods = [ Food "" "" 0 ] -- later populated from csv
+    { foods = [ Food "" "" 0 "" ] -- later populated from csv
     , autoState = Autocomplete.empty
     , howManyToShow = 5
     , query = ""
@@ -167,7 +167,7 @@ update msg model =
             { model | foods = List.map getFood ( Csv.split foodString ) } ! []
 
         LoadFoods (Err _) ->
-             { model | foods = [ Food "" "" 0 ] } ! []
+             { model | foods = [ Food "" "" 0 "" ] } ! []
 
         NoOp ->
             model ! []
@@ -186,7 +186,7 @@ removeSelection model =
 getFoodAtId foods id =
     List.filter (\food -> food.name == id) foods
         |> List.head
-        |> Maybe.withDefault (Food "" "" 0)
+        |> Maybe.withDefault (Food "" "" 0 "")
 
 
 setQuery model id =
@@ -289,7 +289,8 @@ getFood list =
     [] -> nullFood ""
     _ :: [] -> nullFood ""
     _ :: _ :: [] -> nullFood ""
-    [ name, serving, salt ] -> Food name serving ( Result.withDefault 0 (String.toInt salt) )
+    _ :: _ :: _ :: [] -> nullFood ""
+    [ name, serving, salt, source ] -> Food name serving ( Result.withDefault 0 (String.toInt salt) ) source
     _ :: _ :: _ :: _ -> nullFood ""
 
 acceptableFood : String -> List Food -> List Food
@@ -353,6 +354,7 @@ type alias Food =
     { name : String
     , serving: String
     , salt : Int
+    , source : String
     }
 
 -- JSON feed
@@ -381,7 +383,7 @@ getCsv =
 
 -- Dummy record with the err in place of the name
 nullFood : String -> Food
-nullFood err = { name = err, serving = "", salt = 0 }
+nullFood err = { name = err, serving = "", salt = 0, source = "" }
 
 getResult : String -> List Food
 getResult inputJson =
@@ -399,6 +401,7 @@ foodDecoder =
     |> Json.Decode.Pipeline.required "name" string
     |> Json.Decode.Pipeline.required "serving" string
     |> Json.Decode.Pipeline.required "salt" int
+    |> Json.Decode.Pipeline.required "source" string
 
 -- UPDATE: Not needed now that lovasoa fixed bug in Csv.split
 -- Simpler API for recursive method below
