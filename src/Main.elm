@@ -85,7 +85,17 @@ getFoodDisplay model =
                 , span [style [("font-weight", "bold")] ] [ text ( toString food.salt ++ "mg" )  ]
                 , text ( " of salt. " )
                 , div [] [ text ( "That's " ++ toString ( shakesFromMg food.salt ) ++ " salt shakes." ) ]
+                , getSource food.source
                 ]
+
+getSource : String -> Html msg
+getSource source =
+    if String.isEmpty source
+        then text ""
+    else
+        div[] [ text ( "Source: " )
+              , if String.startsWith "http" source then a [ href source ] [ text (source) ] else text source
+              ]
 
 -- UPDATE
 
