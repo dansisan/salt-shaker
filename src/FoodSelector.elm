@@ -1,6 +1,7 @@
 module FoodSelector exposing (..)
 
 import Autocomplete
+import Char
 import Csv
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -282,6 +283,33 @@ view model =
                 menu
             )
 
+formatName : String -> String
+formatName input =
+    let
+        capitalizeWord : String -> String
+        capitalizeWord input =
+            case String.uncons input of
+                Just (c, tl) -> (String.toUpper (String.fromChar c)) ++ String.toLower tl
+                Nothing -> input
+
+        ensureFirstIsCapital : String -> String
+        ensureFirstIsCapital input =
+            case String.uncons input of
+                Nothing -> input
+                Just (c, tl) -> (String.toUpper (String.fromChar c)) ++ tl
+
+        capitalizeIfUpper : String -> String
+        capitalizeIfUpper input =
+            if String.all isUpperLike input then capitalizeWord input else input
+
+        isUpperLike : Char -> Bool
+        isUpperLike c =
+            if (c == '-') || (c == ',') then True
+                else Char.isUpper c
+
+        words = String.split " " ( ensureFirstIsCapital input )
+    in
+        String.join " " (List.map capitalizeIfUpper words)
 
 getFood : List String -> Food
 getFood list =
@@ -290,7 +318,7 @@ getFood list =
     _ :: [] -> nullFood ""
     _ :: _ :: [] -> nullFood ""
     _ :: _ :: _ :: [] -> nullFood ""
-    [ name, serving, salt, source ] -> Food name serving ( Result.withDefault 0 (String.toInt salt) ) source
+    [ name, serving, salt, source ] -> Food (formatName name) serving ( Result.withDefault 0 (String.toInt salt) ) source
     _ :: _ :: _ :: _ -> nullFood ""
 
 acceptableFood : String -> List Food -> List Food
