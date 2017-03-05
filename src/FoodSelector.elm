@@ -385,24 +385,11 @@ type alias Food =
     , source : String
     }
 
--- JSON feed
--- https://spreadsheets.google.com/feeds/list/1pis8-nvG4uhutYepv__-MSDUQIqch_45fgc1h6fSIfs/od6/public/values?alt=json
 
 -- CSV feed
 -- "https://docs.google.com/spreadsheets/d/1pis8-nvG4uhutYepv__-MSDUQIqch_45fgc1h6fSIfs/export?exportFormat=csv&amp;gid=0"
 
 foods : List Food
---foods =
---    [ Food "Beans, baked, can" 1114
---    , Food "McBiscuit with Egg and Sausage" 1141
---    , Food "Cheese Burger" 891
---    , Food "Coleslaw" 267
---    , Food "Hotdog" 670
---    , Food "Potato chips" 213
---    , Food "Chicken noodle soup" 1106
---    , Food "Small McDonald's french fries" 160
---    ]
-
 foods = List.map getFood ( Csv.split """Beans baked can,1114\nMcBiscuit with Egg and Sausage,1141\nCheeseburger,891""" )
 
 getCsv : Cmd Msg
@@ -412,24 +399,6 @@ getCsv =
 -- Dummy record with the err in place of the name
 nullFood : String -> Food
 nullFood err = { name = err, serving = "", salt = 0, source = "" }
-
-getResult : String -> List Food
-getResult inputJson =
-      let result = Json.Decode.decodeString
-            (Json.Decode.list foodDecoder)
-            inputJson
-      in
-        case result of
-            Ok val -> val
-            Err err -> [ nullFood err ]
-
-foodDecoder : Decoder Food
-foodDecoder =
-  decode Food
-    |> Json.Decode.Pipeline.required "name" string
-    |> Json.Decode.Pipeline.required "serving" string
-    |> Json.Decode.Pipeline.required "salt" int
-    |> Json.Decode.Pipeline.required "source" string
 
 -- UPDATE: Not needed now that lovasoa fixed bug in Csv.split
 -- Simpler API for recursive method below
