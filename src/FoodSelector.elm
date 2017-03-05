@@ -42,7 +42,7 @@ type alias Model =
 
 init : Model
 init =
-    { foods = [ Food "" "" 0 "" ] -- later populated from csv
+    { foods = [ Food "" [] "" ] -- later populated from csv
     , autoState = Autocomplete.empty
     , howManyToShow = 12
     , query = ""
@@ -168,7 +168,7 @@ update msg model =
             { model | foods = List.map getFood ( Csv.split foodString ) } ! []
 
         LoadFoods (Err _) ->
-             { model | foods = [ Food "" "" 0 "" ] } ! []
+             { model | foods = [ Food "" [] "" ] } ! []
 
         NoOp ->
             model ! []
@@ -187,7 +187,7 @@ removeSelection model =
 getFoodAtId foods id =
     List.filter (\food -> food.name == id) foods
         |> List.head
-        |> Maybe.withDefault (Food "" "" 0 "")
+        |> Maybe.withDefault (Food "" [] "")
 
 
 setQuery model id =
@@ -318,7 +318,7 @@ getFood list =
     _ :: [] -> nullFood ""
     _ :: _ :: [] -> nullFood ""
     _ :: _ :: _ :: [] -> nullFood ""
-    [ name, serving, salt, source ] -> Food (formatName name) serving ( Result.withDefault 0 (String.toInt salt) ) source
+    [ name, serving, salt, source ] -> Food (formatName name) [ SubFood name serving ( Result.withDefault 0 (String.toInt salt) )] source
     _ :: _ :: _ :: _ -> nullFood ""
 
 acceptableFood : String -> List Food -> List Food
@@ -380,11 +380,15 @@ viewConfig =
 
 type alias Food =
     { name : String
-    , serving: String
-    , salt : Int
+    , subFoods : List SubFood
     , source : String
     }
 
+type alias SubFood =
+    { subname : String
+    , serving : String
+    , salt : Int
+    }
 
 -- CSV feed
 -- "https://docs.google.com/spreadsheets/d/1pis8-nvG4uhutYepv__-MSDUQIqch_45fgc1h6fSIfs/export?exportFormat=csv&amp;gid=0"
@@ -398,7 +402,10 @@ getCsv =
 
 -- Dummy record with the err in place of the name
 nullFood : String -> Food
-nullFood err = { name = err, serving = "", salt = 0, source = "" }
+nullFood err = { name = err, subFoods = [ { subname = "", serving = "", salt = 0 } ] , source = "" }
+
+nullSubFood : SubFood
+nullSubFood = { subname = "", serving = "", salt = 0 }
 
 -- UPDATE: Not needed now that lovasoa fixed bug in Csv.split
 -- Simpler API for recursive method below

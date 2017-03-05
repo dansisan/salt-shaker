@@ -7,7 +7,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Animation exposing (px, turn)
 import Ease exposing (..)
-import FoodSelector
+import FoodSelector exposing (..)
 
 -- MODEL
 
@@ -63,7 +63,10 @@ getNumShakes model =
         Nothing ->
             0
         Just food ->
-            shakesFromMg food.salt
+            let
+                subFood = (Maybe.withDefault nullSubFood (List.head food.subFoods ))
+            in
+                shakesFromMg subFood.salt
 
 -- From salt package, .54 g sodium / 1.4 g salt = .386
 -- Exp 1, 3 holes open, 74 shakes / 4 g = 48
@@ -81,13 +84,20 @@ getFoodDisplay model =
         Just food ->
             div []
                 [ span [style [("font-weight", "bold")] ] [ text food.name ]
-                , text (" (" ++ food.serving ++ ") " )
-                , text (" has " )
-                , span [style [("font-weight", "bold")] ] [ text ( toString food.salt ++ "mg" )  ]
-                , text ( " of salt. " )
-                , div [] [ text ( "That's " ++ toString ( shakesFromMg food.salt ) ++ " salt shakes." ) ]
+                , displaySubFoods food.subFoods
                 , getSource food.source
                 ]
+
+displaySubFoods : List SubFood -> Html msg
+displaySubFoods subFoods =
+    div [] (List.map getSubFoodDisplay subFoods)
+
+getSubFoodDisplay : SubFood -> Html msg
+getSubFoodDisplay subFood =
+    div [] [
+            select [] [
+                        option [] [ text (subFood.subname ++ " (" ++ subFood.serving ++ ")")] ]
+            ]
 
 getSource : String -> Html msg
 getSource source =
