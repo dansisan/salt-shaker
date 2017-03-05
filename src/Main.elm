@@ -81,7 +81,8 @@ getFoodDisplay model =
         Just food ->
             div []
                 [ span [style [("font-weight", "bold")] ] [ text food.name ]
-                , text (" (" ++ food.serving ++ ") has " )
+                , text (" (" ++ food.serving ++ ") " )
+                , text (" has " )
                 , span [style [("font-weight", "bold")] ] [ text ( toString food.salt ++ "mg" )  ]
                 , text ( " of salt. " )
                 , div [] [ text ( "That's " ++ toString ( shakesFromMg food.salt ) ++ " salt shakes." ) ]
