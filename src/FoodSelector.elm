@@ -44,7 +44,7 @@ init : Model
 init =
     { foods = [ Food "" "" 0 "" ] -- later populated from csv
     , autoState = Autocomplete.empty
-    , howManyToShow = 5
+    , howManyToShow = 12
     , query = ""
     , activeMenuFood = Nothing
     , showMenu = False
