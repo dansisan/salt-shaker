@@ -396,6 +396,9 @@ getCsv : Cmd Msg
 getCsv =
     Http.send LoadFoods ( Http.getString "https://gist.githubusercontent.com/dansisan/d657c2e7a36b3b390449821ecc33825b/raw/food-salt.csv" )
 
+-- Have to use this with gulp, not reactor, which requires Internet
+--    Http.send LoadFoods ( Http.getString "/usda.csv" )
+
 -- Dummy record with the err in place of the name
 nullFood : String -> Food
 nullFood err = { name = err, serving = "", salt = 0, source = "" }
