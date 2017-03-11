@@ -304,7 +304,7 @@ formatName input =
 
         isUpperLike : Char -> Bool
         isUpperLike c =
-            if (c == '-') || (c == ',') then True
+            if (c == '-') || (c == ',') || (c == '\'') then True
                 else Char.isUpper c
 
         words = String.split " " ( ensureFirstIsCapital input )
