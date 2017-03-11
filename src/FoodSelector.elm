@@ -421,12 +421,6 @@ type alias SubFood =
     , salt : Int
     }
 
--- CSV feed
--- "https://docs.google.com/spreadsheets/d/1pis8-nvG4uhutYepv__-MSDUQIqch_45fgc1h6fSIfs/export?exportFormat=csv&amp;gid=0"
-
-foods : List Food
-foods = List.map getFood ( Csv.split """Beans baked can,1114\nMcBiscuit with Egg and Sausage,1141\nCheeseburger,891""" )
-
 getCsv : Cmd Msg
 getCsv =
     Http.send LoadFoods ( Http.getString "https://gist.githubusercontent.com/dansisan/d657c2e7a36b3b390449821ecc33825b/raw/food-salt.csv" )
