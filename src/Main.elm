@@ -5,6 +5,7 @@ import Http
 import Autocomplete
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Json.Decode
 import Animation exposing (px, turn)
 import Ease exposing (..)
 import FoodSelector exposing (..)
@@ -14,6 +15,7 @@ import FoodSelector exposing (..)
 type alias Model =
   { foodSelectorModel : FoodSelector.Model
   , animationStyle : Animation.State
+  , selectedSubFoodMg : String
   }
 
 
@@ -22,6 +24,7 @@ initialModel = { foodSelectorModel = FoodSelector.init
                , animationStyle = Animation.styleWith (Animation.easing { duration = 224.0, ease = bezier 0.94 0.01 0.94 0.44 })
                                     [ Animation.translate (px 0.0) (px 0.0)
                                     , Animation.rotate (turn 0) ]
+               , selectedSubFoodMg = ""
                }
 
 init : ( Model, Cmd Msg )
@@ -35,6 +38,7 @@ type Msg
     | Animate Animation.Msg
     | ShakeIt Int
     | LoadFoods FoodSelector.Msg
+    | SetSubFood String
 
 -- VIEW
 
@@ -54,7 +58,9 @@ view model =
             ) []
 
       , div [style [ ("position", "relative"), ("text-align", "center"), ("top", "250px"), ("font-size", "24px") ]]
-            [ getFoodDisplay model ]
+            [ getFoodDisplay model
+            , getSaltDisplay model.selectedSubFoodMg
+            ]
       ]
 
 getNumShakes : Model -> Int
@@ -76,7 +82,7 @@ getNumShakes model =
 shakesFromMg : Int -> Int
 shakesFromMg mg = mg *  59 // 1000
 
-getFoodDisplay : Model -> Html msg
+getFoodDisplay : Model -> Html Msg
 getFoodDisplay model =
     case model.foodSelectorModel.selectedFood of
         Nothing ->
@@ -88,14 +94,20 @@ getFoodDisplay model =
                 , getSource food.source
                 ]
 
-displaySubFoods : List SubFood -> Html msg
+getSaltDisplay : String -> Html Msg
+getSaltDisplay mgString =
+    case String.toInt mgString of
+        Ok mg -> div [] [ text (mgString ++ "mg of salt. That's " ++ toString (shakesFromMg mg) ++ " shakes!") ]
+        Err _ -> span [] []
+
+displaySubFoods : List SubFood -> Html Msg
 displaySubFoods subFoods =
-    div [] [ select [] (List.map getSubFoodDisplay subFoods) ]
+    div [] [ select [ onInput SetSubFood ] (List.map subFoodOption subFoods) ]
 
 
-getSubFoodDisplay : SubFood -> Html msg
-getSubFoodDisplay subFood =
-    option [] [ text (subFood.subname ++ " (" ++ subFood.serving ++ ")")]
+subFoodOption : SubFood -> Html Msg
+subFoodOption subFood =
+    option [ Html.Attributes.value (toString subFood.salt) ] [ text (subFood.subname ++ " (" ++ subFood.serving ++ ")")]
 
 
 getSource : String -> Html msg
@@ -153,6 +165,13 @@ update msg model =
         in
         ({ model | foodSelectorModel = foodSelectorModel }, Cmd.none )
 
+    SetSubFood mgString ->
+        { model | selectedSubFoodMg = mgString } ! []
+
+
+onChange : (Int -> msg) -> Html.Attribute msg
+onChange handler =
+    Html.Events.on "change" <| Json.Decode.map handler <| Json.Decode.at ["target", "value"] Json.Decode.int
 
 -- SUBSCRIPTIONS
 
