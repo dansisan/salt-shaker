@@ -284,73 +284,7 @@ view model =
                 menu
             )
 
-formatName : String -> String
-formatName input =
-    let
-        capitalizeWord : String -> String
-        capitalizeWord input =
-            case String.uncons input of
-                Just (c, tl) -> (String.toUpper (String.fromChar c)) ++ String.toLower tl
-                Nothing -> input
 
-        ensureFirstIsCapital : String -> String
-        ensureFirstIsCapital input =
-            case String.uncons input of
-                Nothing -> input
-                Just (c, tl) -> (String.toUpper (String.fromChar c)) ++ tl
-
-        capitalizeIfUpper : String -> String
-        capitalizeIfUpper input =
-            if String.all isUpperLike input then capitalizeWord input else input
-
-        isUpperLike : Char -> Bool
-        isUpperLike c =
-            if (c == '-') || (c == ',') || (c == '\'') then True
-                else Char.isUpper c
-
-        words = String.split " " ( ensureFirstIsCapital input )
-    in
-        String.join " " (List.map capitalizeIfUpper words)
-
--- Used with foldl to group SubFoods
--- SubFood is everything after the first comma in the name
-groupSubFoods : List String -> Dict String (List SubFood) -> Dict String (List SubFood)
-groupSubFoods csvCols dict =
-    let
-       badMatchEntry =  (("", ""), "", 0, "")
-       ((foodName, subFoodName), serving, salt, source) = case csvCols of
-            [] -> badMatchEntry
-            _ :: [] -> badMatchEntry
-            _ :: _ :: [] -> badMatchEntry
-            _ :: _ :: _ :: [] -> badMatchEntry
-            [ foodCol, serving, salt, source ] -> ( (unpackFoodCol foodCol), serving, ( Result.withDefault 0 (String.toInt salt) ), source)
-            _ :: _ :: _ :: _ -> badMatchEntry
-       key = foodName
-       subFood = SubFood subFoodName serving salt
-       existingValue = Maybe.withDefault [] (Dict.get key dict)
-       newValue = List.append existingValue [subFood]
-    in
-       Dict.insert key newValue dict
-
-processCsv : List (List String) -> List Food
-processCsv csv =
-    let dict = Dict.fromList []
-    in
-        List.map makeFood (List.foldl groupSubFoods dict csv |> Dict.toList)
-
-makeFood : (String, List SubFood) -> Food
-makeFood (foodName, subFoods) =
-    Food (formatName foodName) subFoods ""
-
--- Split food name column into a higher level food name, which appears in search
--- and a SubFood name, which is a variety and will be grouped in a dropdown
-unpackFoodCol : String -> (String, String)
-unpackFoodCol firstField =
-        case String.split "," firstField of
-            h :: tl -> if List.length tl == 0
-                then (h,h) -- use full string/name as subname
-                else (h, String.join "," tl)
-            _ -> ("", "")
 
 acceptableFood : String -> List Food -> List Food
 acceptableFood query foods =
@@ -407,7 +341,7 @@ viewConfig =
 
 
 
--- FOOD
+-- FOOD MODEL
 
 type alias Food =
     { name : String
@@ -421,12 +355,12 @@ type alias SubFood =
     , salt : Int
     }
 
-getCsv : Cmd Msg
-getCsv =
-    Http.send LoadFoods ( Http.getString "https://gist.githubusercontent.com/dansisan/d657c2e7a36b3b390449821ecc33825b/raw/food-salt.csv" )
-
 -- Have to use this with gulp, not reactor, which requires Internet
 --    Http.send LoadFoods ( Http.getString "/usda.csv" )
+
+makeFood : (String, List SubFood) -> Food
+makeFood (foodName, subFoods) =
+    Food (formatName foodName) subFoods ""
 
 -- Dummy record with the err in place of the name
 nullFood : String -> Food
@@ -434,6 +368,77 @@ nullFood err = { name = err, subFoods = [ { subname = "", serving = "", salt = 0
 
 nullSubFood : SubFood
 nullSubFood = { subname = "", serving = "", salt = 0 }
+
+
+-- PROCESSING FOOD LIST/CSV
+
+getCsv : Cmd Msg
+getCsv =
+    Http.send LoadFoods ( Http.getString "https://gist.githubusercontent.com/dansisan/d657c2e7a36b3b390449821ecc33825b/raw/food-salt.csv" )
+
+formatName : String -> String
+formatName input =
+    let
+        capitalizeWord : String -> String
+        capitalizeWord input =
+            case String.uncons input of
+                Just (c, tl) -> (String.toUpper (String.fromChar c)) ++ String.toLower tl
+                Nothing -> input
+
+        ensureFirstIsCapital : String -> String
+        ensureFirstIsCapital input =
+            case String.uncons input of
+                Nothing -> input
+                Just (c, tl) -> (String.toUpper (String.fromChar c)) ++ tl
+
+        capitalizeIfUpper : String -> String
+        capitalizeIfUpper input =
+            if String.all isUpperLike input then capitalizeWord input else input
+
+        isUpperLike : Char -> Bool
+        isUpperLike c =
+            if (c == '-') || (c == ',') || (c == '\'') then True
+                else Char.isUpper c
+
+        words = String.split " " ( ensureFirstIsCapital input )
+    in
+        String.join " " (List.map capitalizeIfUpper words)
+
+-- Used with foldl to group SubFoods
+-- SubFood is everything after the first comma in the name
+groupSubFoods : List String -> Dict String (List SubFood) -> Dict String (List SubFood)
+groupSubFoods csvCols dict =
+    let
+       badMatchEntry =  (("", ""), "", 0, "")
+       ((foodName, subFoodName), serving, salt, source) = case csvCols of
+            [] -> badMatchEntry
+            _ :: [] -> badMatchEntry
+            _ :: _ :: [] -> badMatchEntry
+            _ :: _ :: _ :: [] -> badMatchEntry
+            [ foodCol, serving, salt, source ] -> ( (unpackFoodCol foodCol), serving, ( Result.withDefault 0 (String.toInt salt) ), source)
+            _ :: _ :: _ :: _ -> badMatchEntry
+       key = foodName
+       subFood = SubFood subFoodName serving salt
+       existingValue = Maybe.withDefault [] (Dict.get key dict)
+       newValue = List.append existingValue [subFood]
+    in
+       Dict.insert key newValue dict
+
+processCsv : List (List String) -> List Food
+processCsv csv =
+    let dict = Dict.fromList []
+    in
+        List.map makeFood (List.foldl groupSubFoods dict csv |> Dict.toList)
+
+-- Split food name column into a higher level food name, which appears in search
+-- and a SubFood name, which is a variety and will be grouped in a dropdown
+unpackFoodCol : String -> (String, String)
+unpackFoodCol firstField =
+        case String.split "," firstField of
+            h :: tl -> if List.length tl == 0
+                then (h,h) -- use full string/name as subname
+                else (h, String.join "," tl)
+            _ -> ("", "")
 
 -- UPDATE: Not needed now that lovasoa fixed bug in Csv.split
 -- Simpler API for recursive method below
