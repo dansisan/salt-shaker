@@ -90,14 +90,13 @@ getFoodDisplay model =
 
 displaySubFoods : List SubFood -> Html msg
 displaySubFoods subFoods =
-    div [] (List.map getSubFoodDisplay subFoods)
+    div [] [ select [] (List.map getSubFoodDisplay subFoods) ]
+
 
 getSubFoodDisplay : SubFood -> Html msg
 getSubFoodDisplay subFood =
-    div [] [
-            select [] [
-                        option [] [ text (subFood.subname ++ " (" ++ subFood.serving ++ ")")] ]
-            ]
+    option [] [ text (subFood.subname ++ " (" ++ subFood.serving ++ ")")]
+
 
 getSource : String -> Html msg
 getSource source =

@@ -11,6 +11,7 @@ import String
 import Json.Decode exposing (int, string, float, Decoder)
 import Json.Decode.Pipeline exposing (decode, required, optional)
 import Json.Encode as JE
+import Dict exposing (..)
 import Dom
 import Task
 
@@ -165,7 +166,7 @@ update msg model =
             model ! []
 
         LoadFoods (Ok foodString) ->
-            { model | foods = List.map getFood ( Csv.split foodString ) } ! []
+            { model | foods = processCsv ( Csv.split foodString ) } ! []
 
         LoadFoods (Err _) ->
              { model | foods = [ Food "" [] "" ] } ! []
@@ -311,15 +312,45 @@ formatName input =
     in
         String.join " " (List.map capitalizeIfUpper words)
 
-getFood : List String -> Food
-getFood list =
-  case list of
-    [] -> nullFood ""
-    _ :: [] -> nullFood ""
-    _ :: _ :: [] -> nullFood ""
-    _ :: _ :: _ :: [] -> nullFood ""
-    [ name, serving, salt, source ] -> Food (formatName name) [ SubFood name serving ( Result.withDefault 0 (String.toInt salt) )] source
-    _ :: _ :: _ :: _ -> nullFood ""
+-- Used with foldl to group SubFoods
+-- SubFood is everything after the first comma in the name
+groupSubFoods : List String -> Dict String (List SubFood) -> Dict String (List SubFood)
+groupSubFoods csvCols dict =
+    let
+       badMatchEntry =  (("", ""), "", 0, "")
+       ((foodName, subFoodName), serving, salt, source) = case csvCols of
+            [] -> badMatchEntry
+            _ :: [] -> badMatchEntry
+            _ :: _ :: [] -> badMatchEntry
+            _ :: _ :: _ :: [] -> badMatchEntry
+            [ foodCol, serving, salt, source ] -> ( (unpackFoodCol foodCol), serving, ( Result.withDefault 0 (String.toInt salt) ), source)
+            _ :: _ :: _ :: _ -> badMatchEntry
+       key = foodName
+       subFood = SubFood subFoodName serving salt
+       existingValue = Maybe.withDefault [] (Dict.get key dict)
+       newValue = List.append existingValue [subFood]
+    in
+       Dict.insert key newValue dict
+
+processCsv : List (List String) -> List Food
+processCsv csv =
+    let dict = Dict.fromList []
+    in
+        List.map makeFood (List.foldl groupSubFoods dict csv |> Dict.toList)
+
+makeFood : (String, List SubFood) -> Food
+makeFood (foodName, subFoods) =
+    Food (formatName foodName) subFoods ""
+
+-- Split food name column into a higher level food name, which appears in search
+-- and a SubFood name, which is a variety and will be grouped in a dropdown
+unpackFoodCol : String -> (String, String)
+unpackFoodCol firstField =
+        case String.split "," firstField of
+            h :: tl -> if List.length tl == 0
+                then (h,h) -- use full string/name as subname
+                else (h, String.join "," tl)
+            _ -> ("", "")
 
 acceptableFood : String -> List Food -> List Food
 acceptableFood query foods =
