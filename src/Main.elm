@@ -63,14 +63,12 @@ view model =
 
 getNumShakes : Model -> Int
 getNumShakes model =
-    case model.foodSelectorModel.selectedFood of
+    case model.foodSelectorModel.selectedSubFoodMg of
         Nothing ->
             0
-        Just food ->
-            let
-                subFood = (Maybe.withDefault nullSubFood (List.head food.subFoods ))
-            in
-                shakesFromMg subFood.salt
+        Just mg ->
+            shakesFromMg mg
+
 
 -- From salt package, .54 g sodium / 1.4 g salt = .386
 -- Exp 1, 3 holes open, 74 shakes / 4 g = 48
