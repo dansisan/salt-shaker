@@ -38,7 +38,7 @@ type alias Model =
     , activeMenuFood : Maybe Food -- currently active in menu and will be selected on enter/mouse
     , showMenu : Bool
     , selectedFood : Maybe Food -- selected by hitting enter or mouse
-    , selectedSubFoodMg : String
+    , selectedSubFoodMg : Maybe Int -- salt for the selected subfood (or the first subFood, by default)
     }
 
 
@@ -51,7 +51,7 @@ init =
     , activeMenuFood = Nothing
     , showMenu = False
     , selectedFood = Nothing
-    , selectedSubFoodMg = ""
+    , selectedSubFoodMg = Nothing
     }
 
 
@@ -167,7 +167,12 @@ update msg model =
                 ( {newModel | selectedFood = selectedFood, selectedSubFoodMg = selectedSubFoodMg}, Task.attempt (\_ -> NoOp) (Dom.focus "food-input") )
 
         SetSubFood mgString ->
-            { model | selectedSubFoodMg = mgString } ! []
+            let
+                mg = case String.toInt mgString of
+                    Ok mg -> Just mg
+                    Err _ -> Nothing
+            in
+                { model | selectedSubFoodMg = mg } ! []
 
         PreviewFood id ->
             { model | activeMenuFood = Just <| getFoodAtId model.foods id } ! []
@@ -184,11 +189,11 @@ update msg model =
         NoOp ->
             model ! []
 
-getFirstSaltMg : Maybe Food -> String
+getFirstSaltMg : Maybe Food -> Maybe Int
 getFirstSaltMg food =
     case food of
-        Just food -> Maybe.withDefault nullSubFood (List.head food.subFoods) |> .salt |> toString
-        Nothing -> ""
+        Just food -> Maybe.withDefault nullSubFood (List.head food.subFoods) |> .salt |> Just
+        Nothing -> Nothing
 
 resetInput model =
     { model | query = "" }

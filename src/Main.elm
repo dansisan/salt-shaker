@@ -92,11 +92,11 @@ getFoodDisplay model =
                 , getSource food.source
                 ]
 
-getSaltDisplay : String -> Html Msg
-getSaltDisplay mgString =
-    case String.toInt mgString of
-        Ok mg -> div [] [ text (mgString ++ "mg of salt. That's " ++ toString (shakesFromMg mg) ++ " shakes!") ]
-        Err _ -> span [] []
+getSaltDisplay : Maybe Int -> Html Msg
+getSaltDisplay mg =
+    case mg of
+        Just mg -> div [] [ text (toString mg ++ "mg of salt. That's " ++ toString (shakesFromMg mg) ++ " shakes!") ]
+        Nothing -> span [] []
 
 displaySubFoods : List SubFood -> Html Msg
 displaySubFoods subFoods =
