@@ -38,6 +38,7 @@ type alias Model =
     , activeMenuFood : Maybe Food -- currently active in menu and will be selected on enter/mouse
     , showMenu : Bool
     , selectedFood : Maybe Food -- selected by hitting enter or mouse
+    , selectedSubFoodMg : String
     }
 
 
@@ -50,6 +51,7 @@ init =
     , activeMenuFood = Nothing
     , showMenu = False
     , selectedFood = Nothing
+    , selectedSubFoodMg = ""
     }
 
 
@@ -61,6 +63,7 @@ type Msg
     | HandleEscape
     | SelectFoodKeyboard String
     | SelectFoodMouse String
+    | SetSubFood String
     | PreviewFood String
     | OnFocus
     | LoadFoods (Result Http.Error String)
@@ -148,16 +151,23 @@ update msg model =
                 newModel =
                     setQuery model id
                         |> resetMenu
+                selectedFood = model.activeMenuFood
+                selectedSubFoodMg = getFirstSaltMg selectedFood
             in
-                {newModel | selectedFood = model.activeMenuFood} ! []
+                {newModel | selectedFood = selectedFood, selectedSubFoodMg = selectedSubFoodMg } ! []
 
         SelectFoodMouse id ->
             let
                 newModel =
                     setQuery model id
                         |> resetMenu
+                selectedFood = model.activeMenuFood
+                selectedSubFoodMg = getFirstSaltMg selectedFood
             in
-                ( {newModel | selectedFood = model.activeMenuFood}, Task.attempt (\_ -> NoOp) (Dom.focus "food-input") )
+                ( {newModel | selectedFood = selectedFood, selectedSubFoodMg = selectedSubFoodMg}, Task.attempt (\_ -> NoOp) (Dom.focus "food-input") )
+
+        SetSubFood mgString ->
+            { model | selectedSubFoodMg = mgString } ! []
 
         PreviewFood id ->
             { model | activeMenuFood = Just <| getFoodAtId model.foods id } ! []
@@ -174,6 +184,11 @@ update msg model =
         NoOp ->
             model ! []
 
+getFirstSaltMg : Maybe Food -> String
+getFirstSaltMg food =
+    case food of
+        Just food -> Maybe.withDefault nullSubFood (List.head food.subFoods) |> .salt |> toString
+        Nothing -> ""
 
 resetInput model =
     { model | query = "" }

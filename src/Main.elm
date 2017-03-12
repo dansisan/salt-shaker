@@ -15,7 +15,6 @@ import FoodSelector exposing (..)
 type alias Model =
   { foodSelectorModel : FoodSelector.Model
   , animationStyle : Animation.State
-  , selectedSubFoodMg : String
   }
 
 
@@ -24,7 +23,6 @@ initialModel = { foodSelectorModel = FoodSelector.init
                , animationStyle = Animation.styleWith (Animation.easing { duration = 224.0, ease = bezier 0.94 0.01 0.94 0.44 })
                                     [ Animation.translate (px 0.0) (px 0.0)
                                     , Animation.rotate (turn 0) ]
-               , selectedSubFoodMg = ""
                }
 
 init : ( Model, Cmd Msg )
@@ -59,7 +57,7 @@ view model =
 
       , div [style [ ("position", "relative"), ("text-align", "center"), ("top", "250px"), ("font-size", "24px") ]]
             [ getFoodDisplay model
-            , getSaltDisplay model.selectedSubFoodMg
+            , getSaltDisplay model.foodSelectorModel.selectedSubFoodMg
             ]
       ]
 
@@ -165,9 +163,12 @@ update msg model =
         in
         ({ model | foodSelectorModel = foodSelectorModel }, Cmd.none )
 
-    SetSubFood mgString ->
-        { model | selectedSubFoodMg = mgString } ! []
-
+    SetSubFood mg ->
+        let
+            ( foodSelectorModel, cmd ) =
+                FoodSelector.update (FoodSelector.SetSubFood mg) model.foodSelectorModel
+        in
+            ( {model | foodSelectorModel = foodSelectorModel}, Cmd.none )
 
 onChange : (Int -> msg) -> Html.Attribute msg
 onChange handler =
