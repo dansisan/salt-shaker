@@ -76,7 +76,7 @@ update msg model =
         SetQuery newQuery ->
             let
                 showMenu =
-                    not << List.isEmpty <| (acceptableFood newQuery model.foods)
+                   not << List.isEmpty <| (acceptableFood newQuery model.foods)
             in
                 { model | query = newQuery, showMenu = showMenu, activeMenuFood = Nothing } ! []
 

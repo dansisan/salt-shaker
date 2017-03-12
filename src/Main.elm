@@ -127,48 +127,43 @@ update msg model =
         ( foodSelectorModel, autocompleteCmd ) =
             FoodSelector.update subMsg model.foodSelectorModel
       in
-        ({ model | foodSelectorModel = foodSelectorModel }, Cmd.map AutocompleteMsg autocompleteCmd )
+        ( { model | foodSelectorModel = foodSelectorModel }, Cmd.map AutocompleteMsg autocompleteCmd )
 
     Animate animMsg ->
-                ( { model
-                    | animationStyle = Animation.update animMsg model.animationStyle
-                  }
-                , Cmd.none
-                )
+        ( { model | animationStyle = Animation.update animMsg model.animationStyle }, Cmd.none )
 
     ShakeIt nTimes ->
-                ( { model | animationStyle =
-                    Animation.interrupt
-                        [ Animation.to
-                            [ Animation.rotate (turn 0.5) ]
-                        , ( Animation.repeat nTimes
-                            [ Animation.to
-                                [ Animation.translate (px 0) (px 150) ]
-                            , Animation.to
-                                [ Animation.translate (px 0) (px 0) ]
-                            ] )
-                        , Animation.to
-                            [ Animation.rotate (turn 0.0) ]
-                        ]
-                    model.animationStyle
-                  }
-                , Cmd.none
-                )
-
+        ( { model | animationStyle =
+            Animation.interrupt
+                [ Animation.to
+                    [ Animation.rotate (turn 0.5) ]
+                , ( Animation.repeat nTimes
+                    [ Animation.to
+                        [ Animation.translate (px 0) (px 150) ]
+                    , Animation.to
+                        [ Animation.translate (px 0) (px 0) ]
+                    ] )
+                , Animation.to
+                    [ Animation.rotate (turn 0.0) ]
+                ]
+            model.animationStyle
+          }
+        , Cmd.none
+        )
 
     LoadFoods subMsg ->
         let
-         ( foodSelectorModel, loadFoodsCmd ) =
-            FoodSelector.update subMsg model.foodSelectorModel
+          ( foodSelectorModel, loadFoodsCmd ) =
+                FoodSelector.update subMsg model.foodSelectorModel
         in
-        ({ model | foodSelectorModel = foodSelectorModel }, Cmd.none )
+          ({ model | foodSelectorModel = foodSelectorModel }, Cmd.none )
 
     SetSubFood mg ->
         let
-            ( foodSelectorModel, cmd ) =
+          ( foodSelectorModel, cmd ) =
                 FoodSelector.update (FoodSelector.SetSubFood mg) model.foodSelectorModel
         in
-            ( {model | foodSelectorModel = foodSelectorModel}, Cmd.none )
+          ( {model | foodSelectorModel = foodSelectorModel}, Cmd.none )
 
 onChange : (Int -> msg) -> Html.Attribute msg
 onChange handler =
