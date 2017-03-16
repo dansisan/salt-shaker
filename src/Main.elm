@@ -5,9 +5,12 @@ import Http
 import Autocomplete
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Json.Decode exposing (int, string, float, Decoder)
+import Json.Decode.Pipeline exposing (decode, required, optional)
+import Json.Encode
 import Animation exposing (px, turn)
 import Ease exposing (..)
-import FoodSelector
+import FoodSelector exposing (..)
 
 -- MODEL
 
@@ -35,6 +38,7 @@ type Msg
     | Animate Animation.Msg
     | ShakeIt Int
     | LoadFoods FoodSelector.Msg
+    | SetSubFood String
 
 -- VIEW
 
@@ -45,7 +49,7 @@ view model =
       [ Html.map AutocompleteMsg (FoodSelector.view model.foodSelectorModel)
       , img
             (Animation.render model.animationStyle
-                ++ [ onClick (ShakeIt (getNumShakes model))
+                ++ [ onClick (ShakeIt (calculateNumShakes model))
                    , style
                         [ ( "position", "absolute" )
                         ]
@@ -54,16 +58,19 @@ view model =
             ) []
 
       , div [style [ ("position", "relative"), ("text-align", "center"), ("top", "250px"), ("font-size", "24px") ]]
-            [ getFoodDisplay model ]
+            [ viewFood model
+            , viewSalt model.foodSelectorModel.selectedSubFood
+            ]
       ]
 
-getNumShakes : Model -> Int
-getNumShakes model =
-    case model.foodSelectorModel.selectedFood of
+calculateNumShakes : Model -> Int
+calculateNumShakes model =
+    case model.foodSelectorModel.selectedSubFood of
         Nothing ->
             0
-        Just food ->
-            shakesFromMg food.salt
+        Just subFood ->
+            shakesFromMg subFood.salt
+
 
 -- From salt package, .54 g sodium / 1.4 g salt = .386
 -- Exp 1, 3 holes open, 74 shakes / 4 g = 48
@@ -73,30 +80,79 @@ getNumShakes model =
 shakesFromMg : Int -> Int
 shakesFromMg mg = mg *  59 // 1000
 
-getFoodDisplay : Model -> Html msg
-getFoodDisplay model =
-    case model.foodSelectorModel.selectedFood of
-        Nothing ->
-            div [] [ text "" ]
-        Just food ->
-            div []
-                [ span [style [("font-weight", "bold")] ] [ text food.name ]
-                , text (" (" ++ food.serving ++ ") " )
-                , text (" has " )
-                , span [style [("font-weight", "bold")] ] [ text ( toString food.salt ++ "mg" )  ]
-                , text ( " of salt. " )
-                , div [] [ text ( "That's " ++ toString ( shakesFromMg food.salt ) ++ " salt shakes." ) ]
-                , getSource food.source
-                ]
+globalFont : (String, String)
+globalFont = ("font-family", "Arial")
 
-getSource : String -> Html msg
-getSource source =
-    if String.isEmpty source
-        then text ""
-    else
-        div[] [ text ( "Source: " )
-              , if String.startsWith "http" source then a [ href source ] [ text (source) ] else text source
+viewFood : Model -> Html Msg
+viewFood model =
+    let spanStyle = style [ globalFont
+                          , ("font-weight", "bold")
+                          ]
+    in
+        case model.foodSelectorModel.selectedFood of
+            Nothing ->
+                div [] [ text "" ]
+            Just food ->
+                div []
+                    [ span [ spanStyle ] [ text food.name ]
+                    , viewSubFoodDropdown food.subFoods
+                    ]
+
+viewSalt : Maybe SubFood -> Html Msg
+viewSalt subFood =
+    case subFood of
+        Just subFood -> div [ style [ globalFont ] ] [ text (toString subFood.salt ++ "mg of salt. That's " ++ toString (shakesFromMg subFood.salt) ++ " shakes!")
+                               , viewSource subFood.source
+                               ]
+        Nothing -> span [] []
+
+viewSubFoodDropdown : List SubFood -> Html Msg
+viewSubFoodDropdown subFoods =
+
+    let selectStyle = style [ ("background-color", "#fafafa")
+                                    , ("height", "40px")
+                                    , ("margin", "13px")
+                            ]
+    in
+        div [ ]
+            [ div [ ]
+                [ select [ selectStyle ]
+                    (List.map viewSubFoodOption subFoods)
+                ]
+            ]
+
+
+
+viewSubFoodOption : SubFood -> Html Msg
+viewSubFoodOption subFood =
+    option [ Html.Attributes.value (subFoodToJson subFood) ] [ text (subFood.subname ++ " (" ++ subFood.serving ++ ")")]
+
+
+viewSource : String -> Html msg
+viewSource source =
+    let sourceOrDefault = if String.isEmpty source then "USDA" else source
+
+    in
+        div[ style [("font-size", "50%"), ("color", "gray")] ] [ text ( "Source: " )
+              , if String.startsWith "http" sourceOrDefault then a [ href sourceOrDefault ] [ text (sourceOrDefault) ] else text sourceOrDefault
               ]
+
+
+-- Serialize SubFood
+
+subFoodToJson : SubFood -> String
+subFoodToJson subFood =
+    let
+        requiredFields = [ ("salt", Json.Encode.int subFood.salt) ]
+        -- only add source to Json if not empty -- change source to be a Maybe String
+        fields = if String.isEmpty subFood.source
+                    then requiredFields
+                    else ("source", Json.Encode.string subFood.source) :: requiredFields
+    in
+        Json.Encode.encode 0 (
+            Json.Encode.object
+                fields
+        )
 
 -- UPDATE
 
@@ -108,42 +164,47 @@ update msg model =
         ( foodSelectorModel, autocompleteCmd ) =
             FoodSelector.update subMsg model.foodSelectorModel
       in
-        ({ model | foodSelectorModel = foodSelectorModel }, Cmd.map AutocompleteMsg autocompleteCmd )
+        ( { model | foodSelectorModel = foodSelectorModel }, Cmd.map AutocompleteMsg autocompleteCmd )
 
     Animate animMsg ->
-                ( { model
-                    | animationStyle = Animation.update animMsg model.animationStyle
-                  }
-                , Cmd.none
-                )
+        ( { model | animationStyle = Animation.update animMsg model.animationStyle }, Cmd.none )
 
     ShakeIt nTimes ->
-                ( { model | animationStyle =
-                    Animation.interrupt
-                        [ Animation.to
-                            [ Animation.rotate (turn 0.5) ]
-                        , ( Animation.repeat nTimes
-                            [ Animation.to
-                                [ Animation.translate (px 0) (px 150) ]
-                            , Animation.to
-                                [ Animation.translate (px 0) (px 0) ]
-                            ] )
-                        , Animation.to
-                            [ Animation.rotate (turn 0.0) ]
-                        ]
-                    model.animationStyle
-                  }
-                , Cmd.none
-                )
-
+        ( { model | animationStyle =
+            Animation.interrupt
+                [ Animation.to
+                    [ Animation.rotate (turn 0.5) ]
+                , ( Animation.repeat nTimes
+                    [ Animation.to
+                        [ Animation.translate (px 0) (px 150) ]
+                    , Animation.to
+                        [ Animation.translate (px 0) (px 0) ]
+                    ] )
+                , Animation.to
+                    [ Animation.rotate (turn 0.0) ]
+                ]
+            model.animationStyle
+          }
+        , Cmd.none
+        )
 
     LoadFoods subMsg ->
         let
-         ( foodSelectorModel, loadFoodsCmd ) =
-            FoodSelector.update subMsg model.foodSelectorModel
+          ( foodSelectorModel, loadFoodsCmd ) =
+                FoodSelector.update subMsg model.foodSelectorModel
         in
-        ({ model | foodSelectorModel = foodSelectorModel }, Cmd.none )
+          ({ model | foodSelectorModel = foodSelectorModel }, Cmd.none )
 
+    SetSubFood json ->
+        let
+          ( foodSelectorModel, cmd ) =
+                FoodSelector.update (FoodSelector.SetSubFood json) model.foodSelectorModel
+        in
+          ( {model | foodSelectorModel = foodSelectorModel}, Cmd.none )
+
+onChange : (Int -> msg) -> Html.Attribute msg
+onChange handler =
+    Html.Events.on "change" <| Json.Decode.map handler <| Json.Decode.at ["target", "value"] Json.Decode.int
 
 -- SUBSCRIPTIONS
 
