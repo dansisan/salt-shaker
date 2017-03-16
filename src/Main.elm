@@ -116,7 +116,7 @@ viewSubFoodDropdown subFoods =
     in
         div [ ]
             [ div [ ]
-                [ select [ selectStyle ]
+                [ select [ selectStyle, onInput SetSubFood ]
                     (List.map viewSubFoodOption subFoods)
                 ]
             ]
