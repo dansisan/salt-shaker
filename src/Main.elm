@@ -95,7 +95,7 @@ getSaltDisplay : Maybe SubFood -> Html Msg
 getSaltDisplay subFood =
     case subFood of
         Just subFood -> div [] [ text (toString subFood.salt ++ "mg of salt. That's " ++ toString (shakesFromMg subFood.salt) ++ " shakes!")
-                               , getSource subFood.source
+                               , getSourceDisplay subFood.source
                                ]
         Nothing -> span [] []
 
@@ -109,12 +109,12 @@ subFoodOption subFood =
     option [ Html.Attributes.value (subFoodToJson subFood) ] [ text (subFood.subname ++ " (" ++ subFood.serving ++ ")")]
 
 
-getSource : String -> Html msg
-getSource source =
+getSourceDisplay : String -> Html msg
+getSourceDisplay source =
     let sourceOrDefault = if String.isEmpty source then "USDA" else source
 
     in
-        div[] [ text ( "Source: " )
+        div[ style [("font-size", "50%"), ("color", "gray")] ] [ text ( "Source: " )
               , if String.startsWith "http" sourceOrDefault then a [ href sourceOrDefault ] [ text (sourceOrDefault) ] else text sourceOrDefault
               ]
 
