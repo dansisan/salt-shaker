@@ -101,7 +101,19 @@ viewSalt subFood =
 
 viewSubFoodDropdown : List SubFood -> Html Msg
 viewSubFoodDropdown subFoods =
-    div [] [ select [ onInput SetSubFood ] (List.map viewSubFoodOption subFoods) ]
+
+    let selectStyle = style [ ("background-color", "#fafafa")
+                                    , ("height", "40px")
+                                    , ("margin", "13px")
+                            ]
+    in
+        div [ ]
+            [ div [ ]
+                [ select [ selectStyle ]
+                    (List.map viewSubFoodOption subFoods)
+                ]
+            ]
+
 
 
 viewSubFoodOption : SubFood -> Html Msg
