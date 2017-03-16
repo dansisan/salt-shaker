@@ -58,8 +58,8 @@ view model =
             ) []
 
       , div [style [ ("position", "relative"), ("text-align", "center"), ("top", "250px"), ("font-size", "24px") ]]
-            [ getFoodDisplay model
-            , getSaltDisplay model.foodSelectorModel.selectedSubFood
+            [ viewFood model
+            , viewSalt model.foodSelectorModel.selectedSubFood
             ]
       ]
 
@@ -80,37 +80,37 @@ getNumShakes model =
 shakesFromMg : Int -> Int
 shakesFromMg mg = mg *  59 // 1000
 
-getFoodDisplay : Model -> Html Msg
-getFoodDisplay model =
+viewFood : Model -> Html Msg
+viewFood model =
     case model.foodSelectorModel.selectedFood of
         Nothing ->
             div [] [ text "" ]
         Just food ->
             div []
                 [ span [style [("font-weight", "bold")] ] [ text food.name ]
-                , displaySubFoods food.subFoods
+                , viewSubFoodDropdown food.subFoods
                 ]
 
-getSaltDisplay : Maybe SubFood -> Html Msg
-getSaltDisplay subFood =
+viewSalt : Maybe SubFood -> Html Msg
+viewSalt subFood =
     case subFood of
         Just subFood -> div [] [ text (toString subFood.salt ++ "mg of salt. That's " ++ toString (shakesFromMg subFood.salt) ++ " shakes!")
-                               , getSourceDisplay subFood.source
+                               , viewSource subFood.source
                                ]
         Nothing -> span [] []
 
-displaySubFoods : List SubFood -> Html Msg
-displaySubFoods subFoods =
-    div [] [ select [ onInput SetSubFood ] (List.map subFoodOption subFoods) ]
+viewSubFoodDropdown : List SubFood -> Html Msg
+viewSubFoodDropdown subFoods =
+    div [] [ select [ onInput SetSubFood ] (List.map viewSubFoodOption subFoods) ]
 
 
-subFoodOption : SubFood -> Html Msg
-subFoodOption subFood =
+viewSubFoodOption : SubFood -> Html Msg
+viewSubFoodOption subFood =
     option [ Html.Attributes.value (subFoodToJson subFood) ] [ text (subFood.subname ++ " (" ++ subFood.serving ++ ")")]
 
 
-getSourceDisplay : String -> Html msg
-getSourceDisplay source =
+viewSource : String -> Html msg
+viewSource source =
     let sourceOrDefault = if String.isEmpty source then "USDA" else source
 
     in
