@@ -80,21 +80,28 @@ calculateNumShakes model =
 shakesFromMg : Int -> Int
 shakesFromMg mg = mg *  59 // 1000
 
+globalFont : (String, String)
+globalFont = ("font-family", "Arial")
+
 viewFood : Model -> Html Msg
 viewFood model =
-    case model.foodSelectorModel.selectedFood of
-        Nothing ->
-            div [] [ text "" ]
-        Just food ->
-            div []
-                [ span [style [("font-weight", "bold")] ] [ text food.name ]
-                , viewSubFoodDropdown food.subFoods
-                ]
+    let spanStyle = style [ globalFont
+                          , ("font-weight", "bold")
+                          ]
+    in
+        case model.foodSelectorModel.selectedFood of
+            Nothing ->
+                div [] [ text "" ]
+            Just food ->
+                div []
+                    [ span [ spanStyle ] [ text food.name ]
+                    , viewSubFoodDropdown food.subFoods
+                    ]
 
 viewSalt : Maybe SubFood -> Html Msg
 viewSalt subFood =
     case subFood of
-        Just subFood -> div [] [ text (toString subFood.salt ++ "mg of salt. That's " ++ toString (shakesFromMg subFood.salt) ++ " shakes!")
+        Just subFood -> div [ style [ globalFont ] ] [ text (toString subFood.salt ++ "mg of salt. That's " ++ toString (shakesFromMg subFood.salt) ++ " shakes!")
                                , viewSource subFood.source
                                ]
         Nothing -> span [] []
