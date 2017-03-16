@@ -49,7 +49,7 @@ view model =
       [ Html.map AutocompleteMsg (FoodSelector.view model.foodSelectorModel)
       , img
             (Animation.render model.animationStyle
-                ++ [ onClick (ShakeIt (getNumShakes model))
+                ++ [ onClick (ShakeIt (calculateNumShakes model))
                    , style
                         [ ( "position", "absolute" )
                         ]
@@ -63,8 +63,8 @@ view model =
             ]
       ]
 
-getNumShakes : Model -> Int
-getNumShakes model =
+calculateNumShakes : Model -> Int
+calculateNumShakes model =
     case model.foodSelectorModel.selectedSubFood of
         Nothing ->
             0
