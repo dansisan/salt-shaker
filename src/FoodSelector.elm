@@ -38,20 +38,20 @@ type alias Model =
     , activeMenuFood : Maybe Food -- currently active in menu and will be selected on enter/mouse
     , showMenu : Bool
     , selectedFood : Maybe Food -- selected by hitting enter or mouse
-    , selectedSubFoodMg : Maybe Int -- salt for the selected subfood (or the first subFood, by default)
+    , selectedSubFood : Maybe SubFood -- salt for the selected subfood (or the first subFood, by default)
     }
 
 
 init : Model
 init =
-    { foods = [ Food "" [] "" ] -- later populated from csv
+    { foods = [ Food "" [] ] -- later populated from csv
     , autoState = Autocomplete.empty
     , howManyToShow = 12
     , query = ""
     , activeMenuFood = Nothing
     , showMenu = False
     , selectedFood = Nothing
-    , selectedSubFoodMg = Nothing
+    , selectedSubFood = Nothing
     }
 
 
@@ -152,9 +152,9 @@ update msg model =
                     setQuery model id
                         |> resetMenu
                 selectedFood = model.activeMenuFood
-                selectedSubFoodMg = getFirstSaltMg selectedFood
+                selectedSubFood = (getFirstSubFood selectedFood)
             in
-                {newModel | selectedFood = selectedFood, selectedSubFoodMg = selectedSubFoodMg } ! []
+                {newModel | selectedFood = selectedFood, selectedSubFood = selectedSubFood } ! []
 
         SelectFoodMouse id ->
             let
@@ -162,17 +162,12 @@ update msg model =
                     setQuery model id
                         |> resetMenu
                 selectedFood = model.activeMenuFood
-                selectedSubFoodMg = getFirstSaltMg selectedFood
+                selectedSubFood = (getFirstSubFood selectedFood)
             in
-                ( {newModel | selectedFood = selectedFood, selectedSubFoodMg = selectedSubFoodMg}, Task.attempt (\_ -> NoOp) (Dom.focus "food-input") )
+                ( {newModel | selectedFood = selectedFood, selectedSubFood = selectedSubFood}, Task.attempt (\_ -> NoOp) (Dom.focus "food-input") )
 
-        SetSubFood mgString ->
-            let
-                mg = case String.toInt mgString of
-                    Ok mg -> Just mg
-                    Err _ -> Nothing
-            in
-                { model | selectedSubFoodMg = mg } ! []
+        SetSubFood json ->
+            { model | selectedSubFood = (getSubFoodFromJson json) } ! []
 
         PreviewFood id ->
             { model | activeMenuFood = Just <| getFoodAtId model.foods id } ! []
@@ -184,15 +179,35 @@ update msg model =
             { model | foods = processCsv ( Csv.split foodString ) } ! []
 
         LoadFoods (Err _) ->
-             { model | foods = [ Food "" [] "" ] } ! []
+             { model | foods = [ Food "" [] ] } ! []
 
         NoOp ->
             model ! []
 
-getFirstSaltMg : Maybe Food -> Maybe Int
-getFirstSaltMg food =
+
+-- Deserialize Json
+getSubFoodFromJson : String -> Maybe SubFood
+getSubFoodFromJson inputJson =
+      let result = Json.Decode.decodeString
+            subFoodDecoder
+            inputJson
+      in
+        case result of
+            Ok val -> Just val
+            Err err -> Nothing
+
+subFoodDecoder : Decoder SubFood
+subFoodDecoder =
+  decode SubFood
+    |> Json.Decode.Pipeline.optional "subname" string ""
+    |> Json.Decode.Pipeline.optional "serving" string ""
+    |> Json.Decode.Pipeline.required "salt" int
+    |> Json.Decode.Pipeline.optional "source" string "USDA"
+
+getFirstSubFood : Maybe Food -> Maybe SubFood
+getFirstSubFood food =
     case food of
-        Just food -> Maybe.withDefault nullSubFood (List.head food.subFoods) |> .salt |> Just
+        Just food -> Maybe.withDefault nullSubFood (List.head food.subFoods) |> Just
         Nothing -> Nothing
 
 resetInput model =
@@ -208,7 +223,7 @@ removeSelection model =
 getFoodAtId foods id =
     List.filter (\food -> food.name == id) foods
         |> List.head
-        |> Maybe.withDefault (Food "" [] "")
+        |> Maybe.withDefault (Food "" [])
 
 
 setQuery model id =
@@ -366,13 +381,13 @@ viewConfig =
 type alias Food =
     { name : String
     , subFoods : List SubFood
-    , source : String
     }
 
 type alias SubFood =
     { subname : String
     , serving : String
     , salt : Int
+    , source : String
     }
 
 -- Have to use this with gulp, not reactor, which requires Internet
@@ -380,14 +395,18 @@ type alias SubFood =
 
 makeFood : (String, List SubFood) -> Food
 makeFood (foodName, subFoods) =
-    Food (formatName foodName) subFoods ""
+    Food (formatName foodName) subFoods
 
 -- Dummy record with the err in place of the name
 nullFood : String -> Food
-nullFood err = { name = err, subFoods = [ { subname = "", serving = "", salt = 0 } ] , source = "" }
+nullFood err = { name = err, subFoods = [ { subname = "", serving = "", salt = 0, source = "" } ] }
+
+errSubFood : String -> SubFood
+errSubFood err =
+    { subname = err, serving = "", salt = 0, source = "" }
 
 nullSubFood : SubFood
-nullSubFood = { subname = "", serving = "", salt = 0 }
+nullSubFood = { subname = "", serving = "", salt = 0, source = "" }
 
 
 -- PROCESSING FOOD LIST/CSV
@@ -438,7 +457,7 @@ groupSubFoods csvCols dict =
             [ foodCol, serving, salt, source ] -> ( (unpackFoodCol foodCol), serving, ( Result.withDefault 0 (String.toInt salt) ), source)
             _ :: _ :: _ :: _ -> badMatchEntry
        key = foodName
-       subFood = SubFood subFoodName serving salt
+       subFood = SubFood subFoodName serving salt source
        existingValue = Maybe.withDefault [] (Dict.get key dict)
        newValue = List.append existingValue [subFood]
     in
